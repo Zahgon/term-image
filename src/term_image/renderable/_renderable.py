@@ -568,34 +568,7 @@ been initialized
            * - :py:attr:`~term_image.renderable.Seek.END`
              - -:py:attr:`frame_count` < *offset* <= ``0``
         """
-        frame_count = self.frame_count
-
-        if frame_count is FrameCount.INDEFINITE:
-            raise IndefiniteSeekError(
-                "Cannot seek a renderable with INDEFINITE frame count"
-            )
-
-        frame = (
-            offset
-            if whence is Seek.START
-            else (
-                self._frame + offset
-                if whence is Seek.CURRENT
-                else frame_count + offset - 1
-            )
-        )
-        if not 0 <= frame < frame_count:
-            raise arg_value_error_range(
-                "offset",
-                offset,
-                (
-                    f"whence={whence.name}, frame_count={frame_count}"
-                    + (f", current={self._frame}" if whence is Seek.CURRENT else "")
-                ),
-            )
-        self._frame = frame
-
-        return frame
+        pass
 
     def tell(self) -> int:
         """Returns the current frame number.

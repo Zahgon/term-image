@@ -188,13 +188,7 @@ class RenderIterator:
 
             This method is safe for multiple invocations.
         """
-        if not self._closed:
-            self._iterator.close()
-            del self._iterator
-            if self._finalize_data:
-                self._render_data.finalize()
-            del self._render_data
-            self._closed = True
+        pass
 
     def seek(self, offset: int, whence: Seek = Seek.START) -> None:
         """Sets the frame to be rendered on the next iteration, without affecting
@@ -323,39 +317,7 @@ class RenderIterator:
             :py:attr:`~term_image.renderable.FrameCount.INDEFINITE` frame count for
             the seek operations it supports and any other specific related details.
         """
-        if self._closed:
-            raise FinalizedIteratorError("This iterator has been finalized") from None
-
-        frame_count = self._renderable.frame_count
-        renderable_data = self._renderable_data
-        if frame_count is FrameCount.INDEFINITE:
-            if whence is Seek.START and offset < 0 or whence is Seek.END and offset > 0:
-                raise arg_value_error_range("offset", offset, f"whence={whence.name}")
-            renderable_data.update(frame_offset=offset, seek_whence=whence)
-        else:
-            frame = (
-                offset
-                if whence is Seek.START
-                else (
-                    renderable_data.frame_offset + offset
-                    if whence is Seek.CURRENT
-                    else frame_count + offset - 1
-                )
-            )
-            if not 0 <= frame < frame_count:
-                raise arg_value_error_range(
-                    "offset",
-                    offset,
-                    (
-                        f"whence={whence.name}, frame_count={frame_count}"
-                        + (
-                            f", next={renderable_data.frame_offset}"
-                            if whence is Seek.CURRENT
-                            else ""
-                        )
-                    ),
-                )
-            renderable_data.update(frame_offset=frame, seek_whence=Seek.START)
+        pass
 
     def set_frame_duration(self, duration: int | FrameDuration) -> None:
         """Sets the frame duration.

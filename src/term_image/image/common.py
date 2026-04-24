@@ -587,19 +587,7 @@ class BaseImage(metaclass=ImageMeta):
         * If the instance was initialized with a PIL image, the PIL image is never
           finalized.
         """
-        try:
-            if not self._closed:
-                if self._source_type is ImageSource.URL:
-                    try:
-                        os.remove(self._source)
-                    except FileNotFoundError:
-                        pass
-                    del self._url
-                del self._source
-        except AttributeError:
-            pass  # Instance creation or initialization was unsuccessful
-        finally:
-            self._closed = True
+        pass
 
     def draw(
         self,
@@ -721,30 +709,7 @@ class BaseImage(metaclass=ImageMeta):
         Propagates exceptions raised (or propagated) by :py:func:`PIL.Image.open` and
         the class constructor.
         """
-        if not isinstance(filepath, (str, os.PathLike)):
-            raise arg_type_error("filepath", filepath)
-
-        if isinstance(filepath, os.PathLike):
-            filepath = filepath.__fspath__()
-            if isinstance(filepath, bytes):
-                filepath = filepath.decode()
-
-        # Intentionally propagates `IsADirectoryError` since the message is OK
-        try:
-            img = Image.open(filepath)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"No such file: {filepath!r}") from None
-        except UnidentifiedImageError as e:
-            e.args = (f"Could not identify {filepath!r} as an image",)
-            raise
-
-        with img:
-            new = cls(img, **kwargs)
-        # Absolute paths work better with symlinks, as opposed to real paths:
-        # less confusing, Filename is as expected, helps in path comparisons
-        new._source = os.path.abspath(filepath)
-        new._source_type = ImageSource.FILE_PATH
-        return new
+        pass
 
     @classmethod
     def from_url(
@@ -817,12 +782,7 @@ class BaseImage(metaclass=ImageMeta):
 
         Frame numbers start from 0 (zero).
         """
-        if not isinstance(pos, int):
-            raise arg_type_error("pos", pos)
-        if not 0 <= pos < self.n_frames:
-            raise arg_value_error_range("pos", pos, f"n_frames={self.n_frames}")
-        if self._is_animated:
-            self._seek_position = pos
+        pass
 
     @ClassInstanceMethod
     def set_render_method(cls, method: Optional[str] = None) -> None:
@@ -861,33 +821,11 @@ class BaseImage(metaclass=ImageMeta):
 
             The **class-wide** render method is :term:`descendant`.
         """
-        if method is not None and not isinstance(method, str):
-            raise arg_type_error("method", method)
-        if method is not None and method.lower() not in cls._render_methods:
-            raise ValueError(f"Unknown render method {method!r} for {cls.__name__}")
-
-        if not method:
-            if cls._render_methods:
-                cls._render_method = cls._default_render_method
-        else:
-            cls._render_method = method
+        pass
 
     @set_render_method.instancemethod
     def set_render_method(self, method: Optional[str] = None) -> None:
-        if method is not None and not isinstance(method, str):
-            raise arg_type_error("method", method)
-        if method is not None and method.lower() not in type(self)._render_methods:
-            raise ValueError(
-                f"Unknown render method {method!r} for {type(self).__name__}"
-            )
-
-        if not method:
-            try:
-                del self._render_method
-            except AttributeError:
-                pass
-        else:
-            self._render_method = method
+        pass
 
     def set_size(
         self,
@@ -1188,8 +1126,7 @@ class BaseImage(metaclass=ImageMeta):
 
     def _close_image(self, img: PIL.Image.Image) -> None:
         """Closes the given PIL image instance if it isn't the instance' source."""
-        if img is not self._source:
-            img.close()
+        pass
 
     def _display_animated(
         self,
@@ -1821,13 +1758,7 @@ class ImageIterator:
             This method is automatically called when the iterator is exhausted or
             garbage-collected.
         """
-        try:
-            self._animator.close()
-            del self._animator
-            self._image._close_image(self._img)
-            del self._img
-        except AttributeError:
-            pass
+        pass
 
     def seek(self, pos: int) -> None:
         """Sets the frame number to be yielded on the next iteration without affecting
@@ -1845,17 +1776,7 @@ class ImageIterator:
 
         Frame numbers start from ``0`` (zero).
         """
-        if not isinstance(pos, int):
-            raise arg_type_error("pos", pos)
-        if not 0 <= pos < self._image.n_frames:
-            raise arg_value_error_range("pos", pos, f"n_frames={self._image.n_frames}")
-
-        try:
-            self._animator.send(pos)
-        except TypeError:
-            raise TermImageError("Iteration has not yet started") from None
-        except AttributeError:
-            raise TermImageError("Iterator exhausted or closed") from None
+        pass
 
     def _animate(
         self,
