@@ -124,57 +124,10 @@ class UrwidImage(urwid.Widget):
     )
 
     def render(self, size: Tuple[int, int], focus: bool = False) -> urwid.Canvas:
-        image = self._ti_image
-
-        if len(size) == 2:  # box
-            image.set_size(self._ti_sizing, frame_size=size)
-        elif len(size) == 1:  # flow
-            if self._ti_sizing is Size.FIT:
-                image.set_size(size[0])
-            else:
-                fit_size = self._ti_image._valid_size(size[0])
-                ori_size = self._ti_image._valid_size(Size.ORIGINAL)
-                image._size = (
-                    ori_size
-                    if ori_size[0] <= fit_size[0] and ori_size[1] <= fit_size[1]
-                    else fit_size
-                )
-            size = (size[0], image._size[1])
-        else:  # fixed
-            raise UrwidImageError("Not a fixed widget")
-
-        try:
-            render = image._format_render(
-                image._renderer(
-                    image._render_image, self._ti_alpha, **self._ti_style_args
-                ),
-                self._ti_h_align,
-                size[0],
-                self._ti_v_align,
-                size[1],
-            )
-        except Exception:
-            if type(self)._ti_error_placeholder is None:
-                raise
-            canv = type(self)._ti_error_placeholder.render(size, focus)
-        else:
-            canv = UrwidImageCanvas(render, size, image._size)
-
-        return canv
+        pass
 
     def rows(self, size: Tuple[int], focus: bool = False) -> int:
-        fit_size = self._ti_image._valid_size(size[0])
-        if self._ti_sizing is Size.FIT:
-            n_rows = fit_size[1]
-        else:
-            ori_size = self._ti_image._valid_size(Size.ORIGINAL)
-            n_rows = (
-                ori_size[1]
-                if ori_size[0] <= fit_size[0] and ori_size[1] <= fit_size[1]
-                else fit_size[1]
-            )
-
-        return n_rows
+        pass
 
     @classmethod
     def set_error_placeholder(cls, widget: Optional[urwid.Widget]) -> None:
@@ -189,10 +142,7 @@ class UrwidImage(urwid.Widget):
         If set, any exception raised during rendering is **suppressed** and the
         placeholder is rendered in place of the image.
         """
-        if not isinstance(widget, urwid.Widget):
-            raise arg_type_error("widget", widget)
-
-        cls._ti_error_placeholder = widget
+        pass
 
     @staticmethod
     def _ti_get_z_index() -> int:
@@ -208,7 +158,7 @@ class UrwidImage(urwid.Widget):
 
     def _ti_change_disguise(self) -> None:
         """See :py:meth`UrwidImageCanvas._ti_change_disguise`."""
-        self._ti_disguise_state = (self._ti_disguise_state + 1) % 3
+        pass
 
 
 class UrwidImageCanvas(urwid.Canvas):
@@ -256,163 +206,13 @@ class UrwidImageCanvas(urwid.Canvas):
         self._ti_lines = [line + b"\0\0" for line in render.encode().split(b"\n")]
 
     def cols(self) -> int:
-        return self.size[0]
+        pass
 
     def content(self, trim_left=0, trim_top=0, cols=None, rows=None, attr_map=None):
-        size = self.size
-        image_size = self._ti_image_size
-        visible_rows = rows or size[1]
-        trim_bottom = size[1] - trim_top - visible_rows
-        visible_cols = cols or size[0]
-        trim_right = size[0] - trim_left - visible_cols
-
-        widget = self.widget_info[0]
-        try:
-            image = widget._ti_image
-            h_align = widget._ti_h_align
-            v_align = widget._ti_v_align
-        except AttributeError:  # the canvas wasn't rendered by `UrwidImage`
-            for line in self._ti_lines[trim_top : -trim_bottom or None]:
-                yield [(None, "U", line)]
-            return
-
-        if isinstance(image, TextImage):
-            if trim_left == 0 == trim_right:
-                for line in self._ti_lines[trim_top : -trim_bottom or None]:
-                    yield [(None, "U", line.replace(b"\0", b"")), (None, "U", b"\0\0")]
-                return
-
-            pad = size[1] - image_size[1]
-            if v_align == "^":
-                pad_top = 0
-                pad_bottom = pad
-            elif v_align == "_":
-                pad_top = pad
-                pad_bottom = 0
-            else:
-                pad_top = pad // 2
-                pad_bottom = pad - pad_top
-
-            (
-                new_pad_top,
-                trim_image_top,
-                trim_image_bottom,
-                new_pad_bottom,
-            ) = self._ti_calc_trim(
-                size[1], image_size[1], trim_top, pad_top, trim_bottom, pad_bottom
-            )
-            image_is_empty = image_size[1] in (trim_image_top, trim_image_bottom)
-            image_is_partial = trim_image_top != image_size[1] != trim_image_bottom
-
-            # Adding "\0\0" for consistency with output without horizontal trim
-            padding_line = b" " * visible_cols + b"\0\0"
-
-            if not image_is_empty:
-                pad = size[0] - image_size[0]
-                if h_align == "<":
-                    pad_left = 0
-                    pad_right = pad
-                elif h_align == ">":
-                    pad_left = pad
-                    pad_right = 0
-                else:
-                    pad_left = pad // 2
-                    pad_right = pad - pad_left
-
-                (
-                    new_pad_left,
-                    trim_image_left,
-                    trim_image_right,
-                    new_pad_right,
-                ) = self._ti_calc_trim(
-                    size[0], image_size[0], trim_left, pad_left, trim_right, pad_right
-                )
-                image_line_is_full = trim_image_left == 0 == trim_image_right
-                image_line_is_partial = (
-                    trim_image_left != image_size[0] != trim_image_right
-                )
-                pad_right += 2  # For "\0\0"
-
-                left_padding = (
-                    ((None, "U", b" " * new_pad_left),) if new_pad_left else ()
-                )
-                right_padding = (
-                    ((None, "U", b" " * new_pad_right),) if new_pad_right else ()
-                )
-                color_reset = (
-                    ((None, "U", SGR_DEFAULT_b),)
-                    if image_size[0] > trim_image_right > 0
-                    else ()
-                )
-                last_row_workaround = ((None, "U", b"\0\0"),)
-
-            if image_is_empty:
-                image_lines = []
-            else:
-                image_lines = self._ti_lines[pad_top : -pad_bottom or None]
-                if image_is_partial:
-                    image_lines = image_lines[
-                        trim_image_top : -trim_image_bottom or None
-                    ]
-
-            # top padding
-            for _ in range(new_pad_top):
-                yield [(None, "U", padding_line)]
-
-            # image
-            for line in image_lines:
-                first_color = ()
-                if image_line_is_full:
-                    image_line = line[pad_left:-pad_right].replace(b"\0", b"")
-                elif image_line_is_partial:
-                    line = line[pad_left:-pad_right].split(b"\0")
-                    image_line = b"".join(
-                        line[trim_image_left : -trim_image_right or None]
-                    )
-                    # Exclude non-colored images when the time comes
-                    if not line[trim_image_left].startswith(ESC_b):
-                        for cell in line[trim_image_left - 1 :: -1]:
-                            if cell.startswith(ESC_b):
-                                first_color = (
-                                    (None, "U", cell[: cell.rindex(b"m") + 1]),
-                                )
-                                break
-                image_line = (
-                    (*first_color, (None, "U", image_line))
-                    if image_line_is_full or image_line_is_partial
-                    else ()
-                )
-
-                yield [
-                    *left_padding,
-                    *image_line,
-                    *color_reset,
-                    *right_padding,
-                    *last_row_workaround,
-                ]
-
-            # bottom padding
-            for _ in range(new_pad_bottom):
-                yield [(None, "U", padding_line)]
-        elif trim_left or trim_right:
-            line = b" " * visible_cols
-            for _ in range(visible_rows):
-                yield [(None, "U", line)]
-        else:
-            disguise = (
-                b"\b "
-                * (self._ti_disguise_state + widget._ti_disguise_state)
-                * (
-                    isinstance(image, KittyImage)
-                    or isinstance(image, ITerm2Image)
-                    and get_terminal_name_version()[0] == "konsole"
-                )
-            )
-            for line in self._ti_lines[trim_top : -trim_bottom or None]:
-                yield [(None, "U", line + disguise)]
+        pass
 
     def rows(self) -> int:
-        return self.size[1]
+        pass
 
     @classmethod
     def _ti_change_disguise(cls) -> None:
@@ -427,7 +227,7 @@ class UrwidImageCanvas(urwid.Canvas):
         graphics-based images are cleared and their positions have not change so
         much.
         """
-        cls._ti_disguise_state = (cls._ti_disguise_state + 1) % 3
+        pass
 
     @staticmethod
     def _ti_calc_trim(
@@ -462,33 +262,7 @@ class UrwidImageCanvas(urwid.Canvas):
         The dimensions given as arguments must be along the **same axis** (vertical or
         horizontal).
         """
-        image_end = size - pad_side2
-        if trim_side1 >= image_end:  # within side2 padding
-            new_pad_side1 = 0
-            trim_image_side1 = image_size
-            new_pad_side2 = size - trim_side1
-        elif trim_side1 >= pad_side1:  # within the image
-            new_pad_side1 = 0
-            trim_image_side1 = trim_side1 - pad_side1
-            new_pad_side2 = pad_side2
-        else:  # within side1 padding
-            new_pad_side1 = pad_side1 - trim_side1
-            trim_image_side1 = 0
-            new_pad_side2 = pad_side2
-
-        image_end = size - pad_side1
-        if trim_side2 >= image_end:  # within side1 padding
-            new_pad_side2 = 0
-            trim_image_side2 = image_size
-            new_pad_side1 -= trim_side2 - image_end
-        elif trim_side2 >= pad_side2:  # within the image
-            new_pad_side2 = 0
-            trim_image_side2 = trim_side2 - pad_side2
-        else:  # within side2 padding
-            new_pad_side2 -= trim_side2
-            trim_image_side2 = 0
-
-        return new_pad_side1, trim_image_side1, trim_image_side2, new_pad_side2
+        pass
 
 
 class UrwidImageScreen(urwid.raw_display.Screen):
@@ -510,8 +284,7 @@ class UrwidImageScreen(urwid.raw_display.Screen):
         self._ti_image_cviews = frozenset()
 
     def clear(self):
-        self.clear_images()
-        return super().clear()
+        pass
 
     def clear_images(self, *widgets: UrwidImage, now: bool = False) -> None:
         """Clears on-screen images of :ref:`graphics-based <graphics-based>`
@@ -531,42 +304,7 @@ class UrwidImageScreen(urwid.raw_display.Screen):
               Otherwise, they're cleared when next the output buffer is flushed,
               such as at the next screen redraw.
         """
-        # Also takes care of iterm2 images on Konsole
-        if not (KittyImage.forced_support or KittyImage.is_supported()):
-            return
-
-        if widgets:
-            # Better to send the delete commands in a batch than individually
-            kitty_widgets = []
-            for index, widget in enumerate(widgets):
-                if not isinstance(widget, UrwidImage):
-                    raise arg_type_error(f"widgets[{index}]", widget)
-
-                if isinstance(widget._ti_image, KittyImage):
-                    kitty_widgets.append(widget)
-                    widget._ti_change_disguise()
-
-            if kitty_widgets:
-                if now:
-                    write_tty(
-                        b"".join(
-                            ctlseqs.KITTY_DELETE_Z_INDEX_b % widget._ti_z_index
-                            for widget in kitty_widgets
-                        )
-                    )
-                else:
-                    self.write(
-                        "".join(
-                            ctlseqs.KITTY_DELETE_Z_INDEX % widget._ti_z_index
-                            for widget in kitty_widgets
-                        )
-                    )
-        else:
-            if now:
-                write_tty(ctlseqs.KITTY_DELETE_ALL_b)
-            else:
-                self.write(ctlseqs.KITTY_DELETE_ALL)
-            UrwidImageCanvas._ti_change_disguise()
+        pass
 
     # `@lock_tty` prevents queries during a synced update.
     # Otherwise, responses would be delayed until the synced update ends and that might
@@ -578,25 +316,17 @@ class UrwidImageScreen(urwid.raw_display.Screen):
         Synchronizes output on terminal emulators that support the feature to
         reduce/eliminate image flickering and screen tearing.
         """
-        self.write(BEGIN_SYNCED_UPDATE)
-        try:
-            if canvas is not self._ti_screen_canv:
-                self._ti_screen_canv = canvas
-                self._ti_clear_images()
-            return super().draw_screen(maxres, canvas)
-        finally:
-            self.write(END_SYNCED_UPDATE)
-            self.flush()
+        pass
 
     @lock_tty
     def flush(self):
         """See the baseclass' method for the description."""
-        return super().flush()
+        pass
 
     @lock_tty
     def get_available_raw_input(self):
         """See the baseclass' method for the description."""
-        return super().get_available_raw_input()
+        pass
 
     @lock_tty
     def write(self, data):
@@ -604,83 +334,10 @@ class UrwidImageScreen(urwid.raw_display.Screen):
         return super().write(data)
 
     def _start(self, *args, **kwargs):
-        ret = super()._start(*args, **kwargs)
-        self.clear_images()
-        return ret
+        pass
 
     def _stop(self):
-        self.clear_images()
-        return super()._stop()
+        pass
 
     def _ti_clear_images(self):
-        if not (
-            KittyImage.forced_support
-            or KittyImage.is_supported()
-            or ITerm2Image.is_supported()
-            and get_terminal_name_version()[0] == "konsole"
-        ):
-            return
-
-        screen_canv = self._ti_screen_canv
-
-        if not isinstance(screen_canv, urwid.CompositeCanvas):
-            if self._ti_image_cviews:
-                self.clear_images()
-                self._ti_image_cviews.clear()
-            return
-
-        def process_shard_tails():
-            nonlocal col
-
-            while col in shard_tails:
-                *trim, cols, rows, canv = shard_tails[col]
-                if rows > n_rows:
-                    shard_tails[col] = (*trim, cols, rows - n_rows, canv)
-                else:
-                    del shard_tails[col]
-                col += cols
-
-        image_cviews = set()
-        shard_tails = {}
-        row = 1
-
-        for n_rows, cviews in screen_canv.shards:
-            col = 1
-            for cview in cviews:
-                process_shard_tails()
-                *trim, cols, rows, _, canv = cview
-
-                if isinstance(canv, UrwidImageCanvas):
-                    try:
-                        widget = canv.widget_info[0]
-                    except TypeError:
-                        pass
-                    else:
-                        if (
-                            isinstance(widget._ti_image, KittyImage)
-                            or isinstance(widget._ti_image, ITerm2Image)
-                            and get_terminal_name_version()[0] == "konsole"
-                        ):
-                            image_cviews.add((canv, row, col, *trim, cols, rows))
-
-                if rows > n_rows:
-                    shard_tails[col] = (*trim, cols, rows - n_rows, canv)
-                col += cols
-            process_shard_tails()
-            row += n_rows
-
-        kitty_widgets = []
-        for canv, *_ in self._ti_image_cviews - image_cviews:
-            widget = canv.widget_info[0]
-            if isinstance(widget._ti_image, KittyImage):
-                kitty_widgets.append(widget)
-            else:
-                self.clear_images()
-                # Multiple `clear_images()`s messes up the canvas disguise
-                # A single `clear_images()` takes care of all images anyways
-                break
-        else:
-            if kitty_widgets:
-                self.clear_images(*kitty_widgets)
-
-        self._ti_image_cviews = frozenset(image_cviews)
+        pass

@@ -100,7 +100,7 @@ class Color(_DummyColor):
             Each channel is represented by two **lowercase** hex digits ranging from
             ``00`` to ``ff``.
         """
-        return "#%02x%02x%02x%02x" % self
+        pass
 
     @property
     def rgb(self) -> tuple[int, int, int]:
@@ -109,7 +109,7 @@ class Color(_DummyColor):
         Returns:
             A 3-tuple containing the red, green and blue channel values.
         """
-        return self[:3]
+        pass
 
     @property
     def rgb_hex(self) -> str:
@@ -121,7 +121,7 @@ class Color(_DummyColor):
             Each channel is represented by two **lowercase** hex digits ranging from
             ``00`` to ``ff``.
         """
-        return "#%02x%02x%02x" % self[:3]
+        pass
 
     @classmethod
     def from_hex(cls, color: str) -> Self:
@@ -141,15 +141,12 @@ class Color(_DummyColor):
             For an RGB hex color string, the value of A (the alpha channel) is
             taken to be 255.
         """
-        if not (match := _RGBA_HEX_RE.fullmatch(color)):
-            raise ValueError(f"Invalid hex color string (got: {color!r})")
-
-        return tuple.__new__(cls, [int(x, 16) for x in match.groups("ff")])
+        pass
 
     @classmethod
     def _new(cls, r: int, g: int, b: int, a: int = 255) -> Self:
         """Alternate constructor for internal use only."""
-        return tuple.__new__(cls, (r, g, b, a))
+        pass
 
 
 _Color = Color._new

@@ -90,7 +90,7 @@ def disable_queries() -> None:
     NOTE:
         This affects all :ref:`dependent features <queried-features>`.
     """
-    utils._queries_enabled = False
+    pass
 
 
 def disable_win_size_swap() -> None:
@@ -104,10 +104,7 @@ def disable_win_size_swap() -> None:
         This affects :ref:`auto-cell-ratio` computation and size computations for
         :ref:`graphics-based`.
     """
-    if utils._swap_win_size:
-        utils._swap_win_size = False
-        with utils._cell_size_lock:
-            utils._cell_size_cache[:] = (0,) * 4
+    pass
 
 
 def enable_queries() -> None:
@@ -118,12 +115,7 @@ def enable_queries() -> None:
     NOTE:
         This affects all :ref:`dependent features <queried-features>`.
     """
-    if not utils._queries_enabled:
-        utils._queries_enabled = True
-        getattr(utils.get_fg_bg_colors, "_invalidate_cache")()
-        getattr(utils.get_terminal_name_version, "_invalidate_cache")()
-        with utils._cell_size_lock:
-            utils._cell_size_cache[:] = (0,) * 4
+    pass
 
 
 def enable_win_size_swap() -> None:
@@ -137,10 +129,7 @@ def enable_win_size_swap() -> None:
         This affects :ref:`auto-cell-ratio` computation and size computations for
         :ref:`graphics-based`.
     """
-    if not utils._swap_win_size:
-        utils._swap_win_size = True
-        with utils._cell_size_lock:
-            utils._cell_size_cache[:] = (0,) * 4
+    pass
 
 
 def get_cell_ratio() -> float:
@@ -214,10 +203,7 @@ def set_query_timeout(timeout: float) -> None:
     Raises:
         ValueError: *timeout* is less than or equal to zero.
     """
-    if timeout <= 0.0:
-        raise arg_value_error_range("timeout", timeout)
-
-    utils._query_timeout = timeout
+    pass
 
 
 _cell_ratio: float | None = 0.5

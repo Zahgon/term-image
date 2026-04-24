@@ -158,40 +158,7 @@ class Padding(metaclass=ABCMeta):
             :py:meth:`Renderable._render_()
             <term_image.renderable.Renderable._render_>`, provided *render* is.
         """
-        left, top, right, bottom = self._get_exact_dimensions_(render_size)
-        width = left + render_size.width + right
-        horizontal = left or right
-        vertical = top or bottom
-        fill = self.fill
-
-        if fill:
-            left_padding = fill * left
-            right_padding = fill * right
-            top_padding = f"{fill * width}\n" * top if top else ""
-            bottom_padding = f"\n{fill * width}" * bottom if bottom else ""
-        else:
-            left_padding = cursor_forward(left)
-            right_padding = cursor_forward(right)
-            top_padding = f"{cursor_forward(width)}\n" * top if top else ""
-            bottom_padding = f"\n{cursor_forward(width)}" * bottom if bottom else ""
-
-        return (
-            "".join(
-                (
-                    top_padding,
-                    left_padding,
-                    (
-                        render.replace("\n", f"{right_padding}\n{left_padding}")
-                        if horizontal
-                        else render
-                    ),
-                    right_padding,
-                    bottom_padding,
-                )
-            )
-            if horizontal or vertical
-            else render
-        )
+        pass
 
     def to_exact(self, render_size: Size) -> ExactPadding:
         """Converts the padding to an exact padding for the given :term:`render size`.
@@ -207,11 +174,7 @@ class Padding(metaclass=ABCMeta):
         This is useful to avoid recomputing the exact padding dimensions for **the
         same render size**.
         """
-        return (
-            self
-            if isinstance(self, ExactPadding)
-            else ExactPadding(*self._get_exact_dimensions_(render_size), self.fill)
-        )
+        pass
 
     # Extension methods ========================================================
 
@@ -339,7 +302,7 @@ class AlignedPadding(Padding):
         GET:
             Returns the *minimum render dimensions*.
         """
-        return _RawSize(self.width, self.height)
+        pass
 
     # Public Methods ===========================================================
 
@@ -476,7 +439,7 @@ class ExactPadding(Padding):
         GET:
             Returns the padding dimensions, ``(left, top, right, bottom)``.
         """
-        return astuple(self)[:4]
+        pass
 
     # Extension methods ========================================================
 

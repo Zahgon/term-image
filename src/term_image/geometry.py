@@ -31,7 +31,7 @@ class RawSize(NamedTuple):
     @classmethod
     def _new(cls, width: int, height: int) -> Self:
         """Alternate constructor for internal use only."""
-        return tuple.__new__(cls, (width, height))
+        pass
 
 
 RawSize.width.__doc__ = "The horizontal dimension"

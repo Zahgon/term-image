@@ -242,19 +242,19 @@ __all__ += (
 
 
 def cursor_backward(columns: int) -> str:
-    return CURSOR_BACKWARD % columns if columns > 0 else ""
+    pass
 
 
 def cursor_down(lines: int) -> str:
-    return CURSOR_DOWN % lines if lines > 0 else ""
+    pass
 
 
 def cursor_forward(columns: int) -> str:
-    return CURSOR_FORWARD % columns if columns > 0 else ""
+    pass
 
 
 def cursor_up(lines: int) -> str:
-    return CURSOR_UP % lines if lines > 0 else ""
+    pass
 
 
 def x_parse_color(spec: str) -> tuple[int, int, int]:
@@ -265,9 +265,4 @@ def x_parse_color(spec: str) -> tuple[int, int, int]:
     NOTE:
         The older syntax isn't supported.
     """
-    rgb = spec.partition(":")[2].split("/")
-    scale = len(rgb[0]) * 4  # One hex char -> 4 bits
-    uint_scale_max = (1 << scale) - 1
-    r, g, b = [int(component, 16) * 255 // uint_scale_max for component in rgb]
-
-    return (r, g, b)
+    pass

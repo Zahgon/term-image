@@ -49,19 +49,11 @@ class ITerm2ImageMeta(ImageMeta):
 
     @jpeg_quality.setter
     def jpeg_quality(self, quality: int) -> None:
-        if not isinstance(quality, int):
-            raise arg_type_error("jpeg_quality", quality)
-        if quality > 95:
-            raise arg_value_error_range("jpeg_quality", quality)
-
-        self._jpeg_quality = quality
+        pass
 
     @jpeg_quality.deleter
     def jpeg_quality(self) -> None:
-        try:
-            del self._jpeg_quality
-        except AttributeError:
-            pass
+        pass
 
     native_anim_max_bytes = ClassProperty(
         lambda self: __class__._native_anim_max_bytes,
@@ -73,16 +65,11 @@ class ITerm2ImageMeta(ImageMeta):
 
     @native_anim_max_bytes.setter
     def native_anim_max_bytes(self, max_bytes: int):
-        if not isinstance(max_bytes, int):
-            raise arg_type_error("native_anim_max_bytes", max_bytes)
-        if max_bytes <= 0:
-            raise arg_value_error_range("native_anim_max_bytes", max_bytes)
-
-        __class__._native_anim_max_bytes = max_bytes
+        pass
 
     @native_anim_max_bytes.deleter
     def native_anim_max_bytes(self):
-        __class__._native_anim_max_bytes = __class__.__native_anim_max_bytes
+        pass
 
     read_from_file = ClassInstanceProperty(
         lambda self: getattr(self, "_read_from_file", True),
@@ -94,17 +81,11 @@ class ITerm2ImageMeta(ImageMeta):
 
     @read_from_file.setter
     def read_from_file(self, policy: bool) -> None:
-        if not isinstance(policy, bool):
-            raise arg_type_error("read_from_file", policy)
-
-        self._read_from_file = policy
+        pass
 
     @read_from_file.deleter
     def read_from_file(self) -> None:
-        try:
-            del self._read_from_file
-        except AttributeError:
-            pass
+        pass
 
 
 class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
@@ -178,26 +159,26 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
 
     See :py:meth:`BaseImage.draw` (particularly the *style* parameter).
 
-    * **method** (*None | str*) → Render method override.
+    * **method** (*None | str*) â†’ Render method override.
 
-      * ``None`` → the current effective render method of the instance is used.
-      * *default* → ``None``
+      * ``None`` â†’ the current effective render method of the instance is used.
+      * *default* â†’ ``None``
 
-    * **mix** (*bool*) → Cell content inter-mix policy (**Only supported on WezTerm**,
+    * **mix** (*bool*) â†’ Cell content inter-mix policy (**Only supported on WezTerm**,
       ignored otherwise).
 
-      * ``False`` → existing contents of cells within the region covered by
+      * ``False`` â†’ existing contents of cells within the region covered by
         the drawn render output are erased
-      * ``True`` → existing cell contents show under transparent areas of the
+      * ``True`` â†’ existing cell contents show under transparent areas of the
         drawn render output
-      * *default* → ``False``
+      * *default* â†’ ``False``
 
-    * **compress** (*int*) → ZLIB compression level, for renders re-encoded in PNG
+    * **compress** (*int*) â†’ ZLIB compression level, for renders re-encoded in PNG
       format.
 
       * ``0`` <= *compress* <= ``9``
-      * ``1`` → best speed, ``9`` → best compression, ``0`` → no compression
-      * *default* → ``4``
+      * ``1`` â†’ best speed, ``9`` â†’ best compression, ``0`` â†’ no compression
+      * *default* â†’ ``4``
       * Results in a trade-off between render time and data size/draw speed
 
     |
@@ -210,34 +191,34 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
 
         [ <method> ]  [ m <mix> ]  [ c <compress> ]
 
-    * ``method`` → render method override
+    * ``method`` â†’ render method override
 
-      * ``L`` → **LINES** render method (current frame only, for animated images)
-      * ``W`` → **WHOLE** render method (current frame only, for animated images)
-      * ``A`` → **ANIM** render method [1]_
-      * *default* → current effective render method of the instance
+      * ``L`` â†’ **LINES** render method (current frame only, for animated images)
+      * ``W`` â†’ **WHOLE** render method (current frame only, for animated images)
+      * ``A`` â†’ **ANIM** render method [1]_
+      * *default* â†’ current effective render method of the instance
 
-    * ``m`` → cell content inter-mix policy (**Only supported in WezTerm**, ignored
+    * ``m`` â†’ cell content inter-mix policy (**Only supported in WezTerm**, ignored
       otherwise)
 
-      * ``mix`` → inter-mix policy
+      * ``mix`` â†’ inter-mix policy
 
-        * ``0`` → existing contents of cells in the region covered by the drawn
+        * ``0`` â†’ existing contents of cells in the region covered by the drawn
           render output will be erased
-        * ``1`` → existing cell contents show under transparent areas of the drawn
+        * ``1`` â†’ existing cell contents show under transparent areas of the drawn
           render output
 
-      * *default* → ``m0``
+      * *default* â†’ ``m0``
       * e.g ``m0``, ``m1``
 
-    * ``c`` → ZLIB compression level, for renders re-encoded in PNG format
+    * ``c`` â†’ ZLIB compression level, for renders re-encoded in PNG format
 
-      * ``compress`` → compression level
+      * ``compress`` â†’ compression level
 
         * An integer in the range ``0`` <= ``x`` <= ``9``
-        * ``1`` → best speed, ``9`` → best compression, ``0`` → no compression
+        * ``1`` â†’ best speed, ``9`` â†’ best compression, ``0`` â†’ no compression
 
-      * *default* → ``c4``
+      * *default* â†’ ``c4``
       * e.g ``c0``, ``c9``
       * Results in a trade-off between render time and data size/draw speed
 
@@ -468,22 +449,7 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
         NOTE:
             Required and works only on Konsole, as text doesn't overwrite images.
         """
-        if not isinstance(cursor, bool):
-            raise arg_type_error("cursor", cursor)
-        if not isinstance(now, bool):
-            raise arg_type_error("now", now)
-
-        # There's no point checking for forced support since this is only required on
-        # konsole which supports the protocol.
-        # `is_supported()` is first called to ensure `_TERM` has been set.
-        if cls.is_supported() and cls._TERM == "konsole":
-            # Konsole utilizes the same image rendering implementation as it
-            # uses for the kiity graphics protocol.
-            (write_tty if now else _stdout_write)(
-                (ctlseqs.KITTY_DELETE_CURSOR_b if now else ctlseqs.KITTY_DELETE_CURSOR)
-                if cursor
-                else (ctlseqs.KITTY_DELETE_ALL_b if now else ctlseqs.KITTY_DELETE_ALL)
-            )
+        pass
 
     @classmethod
     def is_supported(cls):
@@ -527,24 +493,7 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
         mix: bool = False,
         **kwargs,
     ):
-        if not mix and self._TERM == "wezterm":
-            lines = max(fmt[-1], self.rendered_height)
-            r_width = self.rendered_width
-            erase_and_move_cursor = ERASE_CHARS % r_width + CURSOR_FORWARD % r_width
-            first_frame = self._format_render(
-                f"{erase_and_move_cursor}\n" * (lines - 1) + erase_and_move_cursor,
-                *fmt,
-            )
-            print(
-                first_frame,
-                "\r",
-                CURSOR_UP % (lines - 1),
-                sep="",
-                end="",
-                flush=True,
-            )
-
-        super()._display_animated(img, alpha, fmt, *args, mix=True, **kwargs)
+        pass
 
     @staticmethod
     def _handle_interrupted_draw():
@@ -554,11 +503,7 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
         wait for more data (while consuming any output following) until the output
         reaches the expected payload size or ST (String Terminator) is written.
         """
-
-        # End last transmission (does no harm if there wasn't an unterminated
-        # transmission)
-        # Konsole sometimes requires ST to be written twice.
-        print(ctlseqs.ST * 2, end="", flush=True)
+        pass
 
     def _render_image(
         self,
@@ -587,200 +532,7 @@ class ITerm2Image(GraphicsImage, metaclass=ITerm2ImageMeta):
         # line separately.
         # Hence, this optimization is only used for the WHOLE render method.
 
-        r_width, r_height = self.rendered_size
-        render_method = (method or self._render_method).lower()
-
-        # Workarounds
-        is_on_konsole = self._TERM == "konsole"
-        is_on_wezterm = self._TERM == "wezterm"
-        cursor_right = CURSOR_FORWARD % r_width
-        cursor_up = CURSOR_UP % (r_height - 1) if r_height > 1 else ""
-        erase = ERASE_CHARS % r_width if not mix and is_on_wezterm else ""
-
-        file_is_readable = True
-        if self._source_type is ImageSource.PIL_IMAGE:
-            try:
-                file_is_readable = os.access(img.filename, os.R_OK)
-            except (AttributeError, OSError):
-                file_is_readable = False
-
-        if render_method == ANIM and self._is_animated and not frame:
-            if self._source_type is ImageSource.PIL_IMAGE:
-                if file_is_readable:
-                    compressed_image = open(img.filename, "rb")
-                else:
-                    compressed_image = io.BytesIO()
-                    try:
-                        img.save(compressed_image, img.format, save_all=True)
-                    except ValueError as e:
-                        self._close_image(img)
-                        raise RenderError(
-                            "iTerm2 native animation not supported: This image was "
-                            "sourced from a PIL image with an unknown format"
-                        ) from e
-            else:
-                compressed_image = open(self._source, "rb")
-
-            self._close_image(img)
-
-            with compressed_image:
-                compressed_image.seek(0, 2)
-                if compressed_image.tell() > self.native_anim_max_bytes:
-                    warnings.warn(
-                        "Image data size above the maximum for native animation",
-                        TermImageUserWarning,
-                    )
-
-                control_data = "".join(
-                    (
-                        f"size={compressed_image.tell()};width={r_width}"
-                        f";height={r_height};preserveAspectRatio=0;inline=1"
-                        f"{';doNotMoveCursor=1' * is_on_konsole}:"
-                    )
-                )
-                compressed_image.seek(0)
-                return "".join(
-                    (
-                        (
-                            ""
-                            if is_on_konsole
-                            else f"{erase}{cursor_right}\n" * (r_height - 1)
-                        ),
-                        erase,
-                        "" if is_on_konsole else cursor_up,
-                        ITERM2_START,
-                        control_data,
-                        standard_b64encode(compressed_image.read()).decode(),
-                        ST,
-                        f"{cursor_right}\n" * (r_height - 1) if is_on_konsole else "",
-                        cursor_right * is_on_konsole,
-                    )
-                )
-
-        width, height = (
-            self._get_minimal_render_size()
-            if render_method == WHOLE
-            else self._get_render_size()
-        )
-
-        if (  # Read directly from file when possible and reasonable
-            self.read_from_file
-            and not self._is_animated
-            and file_is_readable
-            and render_method == WHOLE
-            and mul(*self._original_size) <= mul(*self._get_render_size())
-            and (
-                # None of the *alpha* options can affect these
-                img.mode in {"1", "L", "RGB", "HSV", "CMYK"}
-                # Alpha threshold is unused with graphics-based styles.
-                # The transparency of some "P" mode images is missing on some terminals
-                # Making the output inconsistent with other render styles.
-                or (isinstance(alpha, float) and img.mode not in {"P", "PA"})
-            )
-        ):
-            compressed_image = open(
-                (
-                    img.filename
-                    if self._source_type is ImageSource.PIL_IMAGE
-                    else self._source
-                ),
-                "rb",
-            )
-            frame_img = None
-        else:
-            frame_img = img if frame else None
-            img = self._get_render_data(
-                img, alpha, size=(width, height), pixel_data=False, frame=frame
-            )[0]  # fmt: skip
-            if self.jpeg_quality >= 0 and img.mode == "RGB":
-                format = "jpeg"
-                jpeg_quality = self.jpeg_quality
-            else:
-                format = "png"
-                jpeg_quality = None
-
-            if render_method == LINES:
-                raw_image = io.BytesIO(img.tobytes())
-                compressed_image = io.BytesIO()
-            else:
-                compressed_image = io.BytesIO()
-                img.save(
-                    compressed_image,
-                    format,
-                    compress_level=compress,  # PNG
-                    quality=jpeg_quality,
-                )
-
-        # clean up (ImageIterator uses one PIL image throughout)
-        if frame_img is not img:
-            self._close_image(img)
-
-        if render_method == LINES:
-            # NOTE: It's more efficient to write separate strings to the buffer
-            # separately than concatenate and write together.
-
-            cell_height = height // r_height
-            bytes_per_line = width * cell_height * (len(img.mode))
-            control_data = (
-                f";width={r_width};height=1;preserveAspectRatio=0;inline=1"
-                f"{';doNotMoveCursor=1' * is_on_konsole}:"
-            )
-
-            with io.StringIO() as buffer, raw_image, compressed_image:
-                for line in range(1, r_height + 1):
-                    compressed_image.seek(0)
-                    with PIL.Image.frombytes(
-                        img.mode, (width, cell_height), raw_image.read(bytes_per_line)
-                    ) as img:
-                        img.save(
-                            compressed_image,
-                            format,
-                            compress_level=compress,  # PNG
-                            quality=jpeg_quality,
-                        )
-                    compressed_image.truncate()
-
-                    buffer.write(erase)
-                    buffer.write(ITERM2_START)
-                    buffer.write(f"size={compressed_image.tell()}")
-                    buffer.write(control_data)
-                    buffer.write(
-                        standard_b64encode(compressed_image.getvalue()).decode()
-                    )
-                    buffer.write(ST)
-                    is_on_konsole and buffer.write(cursor_right)
-                    line < r_height and buffer.write("\n")
-
-                return buffer.getvalue()
-
-        # WHOLE
-        with compressed_image:
-            compressed_image.seek(0, 2)
-            control_data = "".join(
-                (
-                    f"size={compressed_image.tell()};width={r_width}"
-                    f";height={r_height};preserveAspectRatio=0;inline=1"
-                    f"{';doNotMoveCursor=1' * is_on_konsole}:"
-                )
-            )
-            compressed_image.seek(0)
-            return "".join(
-                (
-                    (
-                        ""
-                        if is_on_konsole
-                        else f"{erase}{cursor_right}\n" * (r_height - 1)
-                    ),
-                    erase,
-                    "" if is_on_konsole else cursor_up,
-                    ITERM2_START,
-                    control_data,
-                    standard_b64encode(compressed_image.read()).decode(),
-                    ST,
-                    f"{cursor_right}\n" * (r_height - 1) if is_on_konsole else "",
-                    cursor_right * is_on_konsole,
-                )
-            )
+        pass
 
 
 _stdout_write = sys.stdout.write

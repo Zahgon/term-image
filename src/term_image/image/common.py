@@ -78,9 +78,7 @@ def _close_validated(func: FunctionType) -> FunctionType:
 
     @wraps(func)
     def close_validated_wrapper(self, *args, **kwargs):
-        if self._closed:
-            raise TermImageError("This image has been finalized")
-        return func(self, *args, **kwargs)
+        pass
 
     return close_validated_wrapper
 
@@ -174,10 +172,7 @@ class ImageMeta(ABCMeta):
 
     @forced_support.setter
     def forced_support(self, status: bool):
-        if not isinstance(status, bool):
-            raise arg_type_error("forced_support", status)
-
-        self._forced_support = status
+        pass
 
 
 class BaseImage(metaclass=ImageMeta):
@@ -370,12 +365,7 @@ class BaseImage(metaclass=ImageMeta):
 
     @frame_duration.setter
     def frame_duration(self, value: float) -> None:
-        if not isinstance(value, float):
-            raise arg_type_error("frame_duration", value)
-        if value <= 0.0:
-            raise arg_value_error_range("frame_duration", value)
-        if self._is_animated:
-            self._frame_duration = value
+        pass
 
     height = property(
         lambda self: self._size if isinstance(self._size, Size) else self._size[1],
@@ -438,17 +428,7 @@ class BaseImage(metaclass=ImageMeta):
         GET:
             Returns the number of frames the image has.
         """
-        if not self._is_animated:
-            return 1
-
-        if not self._n_frames:
-            img = self._get_image()
-            try:
-                self._n_frames = img.n_frames
-            finally:
-                self._close_image(img)
-
-        return self._n_frames
+        pass
 
     rendered_height = property(
         lambda self: (
@@ -533,14 +513,7 @@ class BaseImage(metaclass=ImageMeta):
 
     @size.setter
     def size(self, size: Size | Tuple[int, int]) -> None:
-        if isinstance(size, Size):
-            self._size = size
-        elif isinstance(size, tuple):
-            if len(size) != 2:
-                raise arg_value_error("size", size)
-            self.set_size(*size)
-        else:
-            raise arg_type_error("size", size)
+        pass
 
     source = property(
         _close_validated(lambda self: getattr(self, self._source_type.value)),
@@ -724,75 +697,7 @@ class BaseImage(metaclass=ImageMeta):
           with :py:data:`~signal.SIGINT` (``CTRL + C``), **without** raising
           :py:class:`KeyboardInterrupt`.
         """
-        fmt = self._check_formatting(h_align, pad_width, v_align, pad_height)
-
-        if alpha is not None:
-            if isinstance(alpha, float):
-                if not 0.0 <= alpha < 1.0:
-                    raise arg_value_error_range("alpha", alpha)
-            elif isinstance(alpha, str):
-                if not _ALPHA_BG_FORMAT.fullmatch(alpha):
-                    raise arg_value_error_msg("Invalid hex color string", alpha)
-            else:
-                raise arg_type_error("alpha", alpha)
-
-        if self._is_animated and not isinstance(animate, bool):
-            raise arg_type_error("animate", animate)
-
-        terminal_width, terminal_height = get_terminal_size()
-        if pad_width > terminal_width:
-            raise arg_value_error_range(
-                "pad_width", pad_width, got_extra=f"terminal_width={terminal_width}"
-            )
-
-        animation = self._is_animated and animate
-
-        if animation and pad_height > terminal_height:
-            raise arg_value_error_range(
-                "pad_height",
-                pad_height,
-                got_extra=f"terminal_height={terminal_height}, animation={animation}",
-            )
-
-        for arg in ("scroll", "check_size"):
-            arg_value = locals()[arg]
-            if not isinstance(arg_value, bool):
-                raise arg_type_error(arg, arg_value)
-
-        # Checks for *repeat* and *cached* are delegated to `ImageIterator`.
-
-        def render(image: PIL.Image.Image) -> None:
-            # Hide the cursor immediately if the output is a terminal device
-            sys.stdout.isatty() and print(HIDE_CURSOR, end="", flush=True)
-            try:
-                style_args = self._check_style_args(style)
-                if animation:
-                    self._display_animated(
-                        image, alpha, fmt, repeat, cached, **style_args
-                    )
-                else:
-                    try:
-                        print(
-                            self._format_render(
-                                self._render_image(image, alpha, **style_args),
-                                *fmt,
-                            ),
-                            end="",
-                            flush=True,
-                        )
-                    except (KeyboardInterrupt, Exception):
-                        self._handle_interrupted_draw()
-                        raise
-            finally:
-                # Reset color and show the cursor
-                print(SGR_DEFAULT, SHOW_CURSOR * sys.stdout.isatty(), sep="")
-
-        self._renderer(
-            render,
-            scroll=scroll,
-            check_size=check_size,
-            animated=animation,
-        )
+        pass
 
     @classmethod
     def from_file(
@@ -874,31 +779,7 @@ class BaseImage(metaclass=ImageMeta):
               context manager, or
             - when the instance is garbage collected.
         """
-        if not isinstance(url, str):
-            raise arg_type_error("url", url)
-        if not all(urlparse(url)[:3]):
-            raise arg_value_error_msg("Invalid URL", url)
-
-        # Propagates connection-related errors.
-        response = requests.get(url, stream=True)
-        if response.status_code == 404:
-            raise URLNotFoundError(f"URL {url!r} does not exist.")
-
-        # Ensure initialization is successful before writing to file
-        try:
-            new = cls(Image.open(io.BytesIO(response.content)), **kwargs)
-        except UnidentifiedImageError as e:
-            e.args = (f"The URL {url!r} doesn't link to an identifiable image",)
-            raise
-
-        fd, filepath = mkstemp("-" + os.path.basename(url), dir=_TEMP_DIR)
-        os.write(fd, response.content)
-        os.close(fd)
-
-        new._source = filepath
-        new._source_type = ImageSource.URL
-        new._url = url
-        return new
+        pass
 
     @classmethod
     @abstractmethod
@@ -1303,7 +1184,7 @@ class BaseImage(metaclass=ImageMeta):
         Returns:
             ``True`` if the frame was cleared. Otherwise, ``False``.
         """
-        return False
+        pass
 
     def _close_image(self, img: PIL.Image.Image) -> None:
         """Closes the given PIL image instance if it isn't the instance' source."""
@@ -1320,43 +1201,7 @@ class BaseImage(metaclass=ImageMeta):
         **style_args: Any,
     ) -> None:
         """Displays an animated GIF image in the terminal."""
-        lines = max(fmt[-1], self.rendered_height)
-        prev_seek_pos = self._seek_position
-        duration = self._frame_duration
-        image_it = ImageIterator(self, repeat, "", cached)
-        image_it._animator = image_it._animate(img, alpha, fmt, style_args)
-        cursor_up = CURSOR_UP % (lines - 1)
-        cursor_down = CURSOR_DOWN % lines
-
-        try:
-            print(next(image_it._animator), end="", flush=True)  # First frame
-
-            # Render next frame during current frame's duration
-            start = time.time()
-            for frame in image_it._animator:  # Renders next frame
-                # Left-over of current frame's duration
-                time.sleep(max(0, duration - (time.time() - start)))
-
-                # Clear the current frame, if necessary,
-                # move cursor up to the beginning of the first line of the image
-                # and print the new current frame.
-                self._clear_frame()
-                print("\r", cursor_up, frame, sep="", end="", flush=True)
-
-                # Render next frame during current frame's duration
-                start = time.time()
-        except KeyboardInterrupt:
-            self._handle_interrupted_draw()
-        except Exception:
-            self._handle_interrupted_draw()
-            raise
-        finally:
-            image_it.close()
-            self._close_image(img)
-            self._seek_position = prev_seek_pos
-            # Move the cursor to the last line of the image to prevent "overlaid"
-            # output in the terminal
-            print(cursor_down, end="")
+        pass
 
     def _format_render(
         self,
@@ -1372,42 +1217,7 @@ class BaseImage(metaclass=ImageMeta):
             * All arguments should be passed through ``_check_formatting()`` first.
             * Only **absolute** padding dimensions are expected.
         """
-        cols, lines = self.rendered_size
-
-        if width > cols:
-            if h_align == "<":  # left
-                left = ""
-                right = " " * (width - cols)
-            elif h_align == ">":  # right
-                left = " " * (width - cols)
-                right = ""
-            else:  # center
-                left = " " * ((width - cols) // 2)
-                right = " " * (width - cols - len(left))
-            render = render.replace("\n", f"{right}\n{left}")
-        else:
-            left = right = ""
-
-        if height > lines:
-            if v_align == "^":  # top
-                top = 0
-                bottom = height - lines
-            elif v_align == "_":  # bottom
-                top = height - lines
-                bottom = 0
-            else:  # middle
-                top = (height - lines) // 2
-                bottom = height - lines - top
-            top = f"{' ' * width}\n" * top
-            bottom = f"\n{' ' * width}" * bottom
-        else:
-            top = bottom = ""
-
-        return (
-            "".join((top, left, render, right, bottom))
-            if width > cols or height > lines
-            else render
-        )
+        pass
 
     @_close_validated
     def _get_image(self) -> PIL.Image.Image:
@@ -1454,75 +1264,7 @@ class BaseImage(metaclass=ImageMeta):
           * ``a`` is a list of integers in the range [0, 255] representing the alpha
             channel of the image's pixels in a flattened row-major order.
         """
-
-        def convert_resize_img(mode: str):
-            nonlocal img
-
-            if img.mode != mode:
-                prev_img = img
-                try:
-                    img = img.convert(mode)
-                # Possible for images in some modes e.g "La"
-                except Exception as e:
-                    raise RenderError("Unable to convert image") from e
-                finally:
-                    if frame_img is not prev_img:
-                        self._close_image(prev_img)
-
-            if img.size != size:
-                prev_img = img
-                try:
-                    img = img.resize(size, Image.Resampling.BOX)
-                # Highly unlikely since render size can never be zero
-                except Exception as e:
-                    raise RenderError("Unable to resize image") from e
-                finally:
-                    if frame_img is not prev_img:
-                        self._close_image(prev_img)
-
-        frame_img = img if frame else None
-        if self._is_animated:
-            img.seek(self._seek_position)
-        if not size:
-            size = self._get_render_size()
-
-        if alpha is None or img.mode in {"1", "L", "RGB", "HSV", "CMYK"}:
-            convert_resize_img("RGB")
-            if pixel_data:
-                rgb = list(img.getdata())
-                a = [255] * mul(*size)
-        else:
-            convert_resize_img("RGBA")
-            if isinstance(alpha, str):
-                if alpha == "#":
-                    alpha = get_fg_bg_colors(hex=True)[1] or "#000000"
-                bg = Image.new("RGBA", img.size, alpha)
-                bg.alpha_composite(img)
-                if frame_img is not img:
-                    self._close_image(img)
-                img = bg.convert("RGB")
-                if pixel_data:
-                    a = [255] * mul(*size)
-            else:
-                if pixel_data:
-                    a = list(img.getdata(3))
-                    if round_alpha:
-                        alpha = round(alpha * 255)
-                        a = [0 if val < alpha else 255 for val in a]
-                if round_alpha:
-                    bg = Image.new(
-                        "RGBA", img.size, get_fg_bg_colors(hex=True)[1] or "#000000"
-                    )
-                    bg.alpha_composite(img)
-                    bg.putalpha(img.getchannel("A"))
-                    if frame_img is not img:
-                        self._close_image(img)
-                    img = bg
-
-            if pixel_data:
-                rgb = list((img if img.mode == "RGB" else img.convert("RGB")).getdata())
-
-        return (img, *(pixel_data and (rgb, a) or (None, None)))
+        pass
 
     @abstractmethod
     def _get_render_size(self) -> Tuple[int, int]:
@@ -1875,27 +1617,10 @@ class GraphicsImage(BaseImage):
         return super().__new__(cls)
 
     def _get_minimal_render_size(self, *, adjust: bool = False) -> Tuple[int, int]:
-        render_size = self._get_render_size()
-        r_height = self.rendered_height
-        width, height = (
-            render_size
-            if mul(*render_size) < mul(*self._original_size)
-            else self._original_size
-        )
-
-        # When `_original_size` is used, ensure the height is a multiple of the rendered
-        # height, so that pixels can be evenly distributed among all lines.
-        # If r_height == 0, height == 0, extra == 0; Handled in `_get_render_data()`.
-        if adjust:
-            extra = height % (r_height or 1)
-            if extra:
-                # Incremented to the greater multiple to avoid losing any data
-                height = height - extra + r_height
-
-        return width, height
+        pass
 
     def _get_render_size(self) -> Tuple[int, int]:
-        return tuple(map(mul, self.rendered_size, get_cell_size() or (1, 2)))
+        pass
 
     @staticmethod
     def _pixels_cols(
@@ -1943,7 +1668,7 @@ class TextImage(BaseImage):
     @staticmethod
     @cached
     def _is_on_kitty() -> bool:
-        return get_terminal_name_version()[0] == "kitty"
+        pass
 
     @abstractmethod
     def _render_image(
@@ -2142,62 +1867,9 @@ class ImageIterator:
         """Returns a generator that yields rendered and formatted frames of the
         underlying image.
         """
-        self._img = img  # For cleanup
-        image = self._image
-        cached = self._cached
-        self._loop_no = repeat = self._repeat
-        if cached:
-            cache = [(None,) * 2] * image.n_frames
-
-        sent = None
-        n = 0
-        while repeat:
-            if sent is None:
-                image._seek_position = n
-                try:
-                    frame = image._format_render(
-                        image._render_image(img, alpha, frame=True, **style_args), *fmt
-                    )
-                except EOFError:
-                    image._seek_position = n = 0
-                    if repeat > 0:  # Avoid infinitely large negative numbers
-                        self._loop_no = repeat = repeat - 1
-                    if cached:
-                        break
-                    continue
-                else:
-                    if cached:
-                        cache[n] = (frame, hash(image.rendered_size))
-
-            sent = yield frame
-            n = n + 1 if sent is None else sent - 1
-
-        if cached:
-            n_frames = len(cache)
-        while repeat:
-            while n < n_frames:
-                if sent is None:
-                    image._seek_position = n
-                    frame, size_hash = cache[n]
-                    if hash(image.rendered_size) != size_hash:
-                        frame = image._format_render(
-                            image._render_image(img, alpha, frame=True, **style_args),
-                            *fmt,
-                        )
-                        cache[n] = (frame, hash(image.rendered_size))
-
-                sent = yield frame
-                n = n + 1 if sent is None else sent - 1
-
-            image._seek_position = n = 0
-            if repeat > 0:  # Avoid infinitely large negative numbers
-                self._loop_no = repeat = repeat - 1
-
-        # For consistency in behaviour
-        if img is image._source:
-            img.seek(0)
+        pass
 
 
 @atexit.register
 def _cleanup_temp_dir():
-    rmtree(_TEMP_DIR, ignore_errors=True)
+    pass

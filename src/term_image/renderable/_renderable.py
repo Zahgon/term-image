@@ -413,10 +413,7 @@ been initialized
             * the number of frames the renderable has, or
             * :py:attr:`~term_image.renderable.FrameCount.INDEFINITE`.
         """
-        if self._frame_count is FrameCount.POSTPONED:
-            self._frame_count = self._get_frame_count_()
-
-        return self._frame_count
+        pass
 
     @property
     def frame_duration(self) -> int | FrameDuration:
@@ -440,26 +437,11 @@ been initialized
         Raises:
             NonAnimatedRenderableError: The renderable is non-animated.
         """
-        try:
-            return self._frame_duration
-        except AttributeError:
-            if not self.animated:
-                raise NonAnimatedRenderableError(
-                    "Non-animated renderables have no frame duration"
-                ) from None
-            raise
+        pass
 
     @frame_duration.setter
     def frame_duration(self, duration: int | FrameDuration) -> None:
-        if not self.animated:
-            raise NonAnimatedRenderableError(
-                "Cannot set frame duration for a non-animated renderable"
-            )
-
-        if isinstance(duration, int) and duration <= 0:
-            raise arg_value_error_range("frame_duration", duration)
-
-        self._frame_duration = duration
+        pass
 
     @property
     def render_size(self) -> geometry.Size:
@@ -468,7 +450,7 @@ been initialized
         GET:
             Returns the size of the renderable's :term:`render output`.
         """
-        return self._get_render_size_()
+        pass
 
     # Public Methods ===========================================================
 
@@ -532,63 +514,7 @@ been initialized
               looped but can be terminated with :py:data:`~signal.SIGINT`
               (``CTRL + C``), **without** raising :py:class:`KeyboardInterrupt`.
         """
-        animation = self.animated and animate
-        output = sys.stdout
-        not_echo_input = OS_IS_UNIX and not echo_input and output.isatty()
-        hide_cursor = hide_cursor and output.isatty()
-
-        # Validate size and get render data and args
-        render_data: RenderData
-        real_render_args: RenderArgs
-        (render_data, real_render_args), padding = self._init_render_(
-            lambda *args: args,
-            render_args,
-            padding,
-            iteration=animation,
-            finalize=False,
-            check_size=animation or check_size,
-            allow_scroll=not animation and allow_scroll,
-        )
-
-        if not_echo_input:
-            output_fd = output.fileno()
-            old_attr = termios.tcgetattr(output_fd)
-            new_attr = termios.tcgetattr(output_fd)
-            new_attr[3] &= ~termios.ECHO
-        try:
-            if hide_cursor:
-                output.write(HIDE_CURSOR)
-            if not_echo_input:
-                termios.tcsetattr(output_fd, termios.TCSAFLUSH, new_attr)
-
-            if animation:
-                self._animate_(
-                    render_data, real_render_args, padding, loops, cache, output
-                )
-            else:
-                frame = self._render_(render_data, real_render_args)
-                padded_size = padding.get_padded_size(frame.render_size)
-                render = (
-                    frame.render_output
-                    if frame.render_size == padded_size
-                    else padding.pad(frame.render_output, frame.render_size)
-                )
-                try:
-                    output.write(render)
-                    output.flush()
-                except KeyboardInterrupt:
-                    self._handle_interrupted_draw_(
-                        render_data, real_render_args, output
-                    )
-                    raise
-        finally:
-            output.write("\n")
-            if hide_cursor:
-                output.write(SHOW_CURSOR)
-            output.flush()
-            if not_echo_input:
-                termios.tcsetattr(output_fd, termios.TCSANOW, old_attr)
-            render_data.finalize()
+        pass
 
     def render(
         self,
@@ -608,19 +534,7 @@ been initialized
             IncompatibleRenderArgsError: Incompatible render arguments.
             RenderError: An error occurred during :term:`rendering`.
         """
-        frame, padding = self._init_render_(self._render_, render_args, padding)
-        padded_size = padding.get_padded_size(frame.render_size)
-
-        return (
-            frame
-            if frame.render_size == padded_size
-            else Frame(
-                frame.number,
-                frame.duration,
-                padded_size,
-                padding.pad(frame.render_output, frame.render_size),
-            )
-        )
+        pass
 
     def seek(self, offset: int, whence: Seek = Seek.START) -> int:
         """Sets the current frame number.
@@ -724,93 +638,7 @@ been initialized
             * When called by :py:meth:`draw` (at least, the base implementation),
               *loops* and *cache* wouldn't have been validated.
         """
-        from term_image.render import RenderIterator
-
-        render_size: Size = render_data[Renderable].size
-        height = render_size.height
-        pad_left, _, _, pad_bottom = padding._get_exact_dimensions_(render_size)
-        render_iter = RenderIterator._from_render_data_(
-            self,
-            render_data,
-            render_args,
-            padding,
-            loops,
-            False if loops == 1 else cache,
-            finalize=False,
-        )
-        cursor_to_next_render_line = f"\n{cursor_forward(pad_left)}"
-        cursor_to_render_top_left = (
-            f"\r{cursor_up(height - 1)}{cursor_forward(pad_left)}"
-        )
-        write = output.write
-        flush = output.flush
-        first_frame_written = False
-
-        try:
-            # first frame
-            try:
-                frame = next(render_iter)
-            except StopIteration:  # `INDEFINITE` frame count
-                return
-
-            try:
-                write(frame.render_output)
-                flush()
-            except KeyboardInterrupt:
-                self._handle_interrupted_draw_(render_data, render_args, output)
-                return
-            else:
-                # Move the cursor to the top-left cell of the region occupied by the
-                # render output
-                write(
-                    f"\r{cursor_up(height + pad_bottom - 1)}{cursor_forward(pad_left)}"
-                )
-                flush()
-
-            first_frame_written = True
-
-            # Padding has been drawn with the first frame, only the actual render is
-            # needed henceforth.
-            render_iter.set_padding(NO_PADDING)
-
-            # render next frame during previous frame's duration
-            duration_ms = frame.duration
-            start_ns = perf_counter_ns()
-
-            for frame in render_iter:  # Render next frame
-                # left-over of previous frame's duration
-                sleep(
-                    max(0, duration_ms * 10**6 - (perf_counter_ns() - start_ns)) / 10**9
-                )
-
-                # clear previous frame, if necessary
-                self._clear_frame_(render_data, render_args, pad_left + 1, output)
-
-                # draw next frame
-                try:
-                    write(frame.render_output.replace("\n", cursor_to_next_render_line))
-                    flush()
-                except KeyboardInterrupt:
-                    self._handle_interrupted_draw_(render_data, render_args, output)
-                    return
-
-                write(cursor_to_render_top_left)
-                flush()
-
-                # render next frame during previous frame's duration
-                start_ns = perf_counter_ns()
-                duration_ms = frame.duration
-
-            # left-over of last frame's duration
-            sleep(max(0, duration_ms * 10**6 - (perf_counter_ns() - start_ns)) / 10**9)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            render_iter.close()
-            if first_frame_written:
-                # Move the cursor to the last line to prevent "overlaid" output
-                write(cursor_down(height + pad_bottom - 1))
-                flush()
+        pass
 
     def _clear_frame_(
         self,

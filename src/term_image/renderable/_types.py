@@ -249,12 +249,7 @@ class ArgsDataNamespace(metaclass=ArgsDataNamespaceMeta, _base=True):
             UnassociatedNamespaceError: The namespace class hasn't been associated
               with a render class.
         """
-        if not cls._associated:
-            raise UnassociatedNamespaceError(
-                "This namespace class hasn't been associated with a render class"
-            )
-
-        return cls._RENDER_CLS
+        pass
 
 
 class ArgsNamespaceMeta(ArgsDataNamespaceMeta):
@@ -543,7 +538,7 @@ class ArgsNamespace(ArgsDataNamespace, metaclass=ArgsNamespaceMeta, _base=True):
             and the number should be considered an implementation detail of the
             specific namespace subclass.
         """
-        return cls._FIELDS
+        pass
 
     def to_render_args(self, render_cls: type[Renderable] | None = None) -> RenderArgs:
         """Creates a set of render arguments from the namespace.
@@ -562,7 +557,7 @@ class ArgsNamespace(ArgsDataNamespace, metaclass=ArgsNamespaceMeta, _base=True):
 
         .. seealso:: :py:meth:`__pos__`.
         """
-        return RenderArgs(render_cls or type(self)._RENDER_CLS, self)
+        pass
 
     def update(self, **fields: Any) -> Self:
         """Updates render argument fields.
@@ -737,7 +732,7 @@ class DataNamespace(ArgsDataNamespace, metaclass=DataNamespaceMeta, _base=True):
             and the number should be considered an implementation detail of the
             specific namespace subclass.
         """
-        return tuple(cls._FIELDS)
+        pass
 
     def update(self, **fields: Any) -> None:
         """Updates render data fields.
@@ -1132,27 +1127,7 @@ class RenderArgs(RenderArgsData):
         Raises:
             ValueError: *render_cls* is not a parent or child of :py:attr:`render_cls`.
         """
-        if render_cls is self.render_cls:
-            return self
-
-        if issubclass(render_cls, self.render_cls):
-            return RenderArgs(render_cls, self)
-
-        if issubclass(self.render_cls, render_cls):
-            render_cls_args_mro = render_cls._ALL_DEFAULT_ARGS
-            return RenderArgs(
-                render_cls,
-                *[
-                    namespace
-                    for cls, namespace in self._namespaces.items()
-                    if cls in render_cls_args_mro
-                ],
-            )
-
-        raise ValueError(
-            f"{render_cls.__name__!r} is not a parent or child of "
-            f"{self.render_cls.__name__!r}"
-        )
+        pass
 
     @overload
     def update(

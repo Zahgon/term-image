@@ -76,37 +76,37 @@ class KittyImage(GraphicsImage):
 
     See :py:meth:`BaseImage.draw` (particularly the *style* parameter).
 
-    * **method** (*None | str*) → Render method override.
+    * **method** (*None | str*) â†’ Render method override.
 
-      * ``None`` → the current effective render method of the instance is used.
-      * *default* → ``None``
+      * ``None`` â†’ the current effective render method of the instance is used.
+      * *default* â†’ ``None``
 
-    * **z_index** (*int*) → The stacking order of graphics and text for
+    * **z_index** (*int*) â†’ The stacking order of graphics and text for
       **non-animations**.
 
       * An integer in the **signed 32-bit** range (excluding ``-(2**31)``)
-      * ``>= 0`` → the image will be drawn above text
-      * ``< 0`` → the image will be drawn below text
-      * ``< -(2**31)/2`` → the image will be drawn below cells with non-default
+      * ``>= 0`` â†’ the image will be drawn above text
+      * ``< 0`` â†’ the image will be drawn below text
+      * ``< -(2**31)/2`` â†’ the image will be drawn below cells with non-default
         background color
-      * *default* → ``0``
+      * *default* â†’ ``0``
       * Overlapping graphics on different z-indexes will be blended (by the terminal
         emulator) if they are semi-transparent.
       * To inter-mix text with graphics, see the *mix* parameter.
 
-    * **mix** (*bool*) → Graphics/Text inter-mix policy.
+    * **mix** (*bool*) â†’ Graphics/Text inter-mix policy.
 
-      * ``False`` → text within the region covered by the drawn render output will be
+      * ``False`` â†’ text within the region covered by the drawn render output will be
         erased, though text can be inter-mixed with graphics after drawing
-      * ``True`` → text within the region covered by the drawn render output will NOT
+      * ``True`` â†’ text within the region covered by the drawn render output will NOT
         be erased
-      * *default* → ``False``
+      * *default* â†’ ``False``
 
-    * **compress** (*int*) → ZLIB compression level.
+    * **compress** (*int*) â†’ ZLIB compression level.
 
       * ``0`` <= *compress* <= ``9``
-      * ``1`` → best speed, ``9`` → best compression, ``0`` → no compression
-      * *default* → ``4``
+      * ``1`` â†’ best speed, ``9`` â†’ best compression, ``0`` â†’ no compression
+      * *default* â†’ ``4``
       * Results in a trade-off between render time and data size/draw speed
 
     |
@@ -119,47 +119,47 @@ class KittyImage(GraphicsImage):
 
         [ <method> ]  [ z <z-index> ]  [ m <mix> ]  [ c <compress> ]
 
-    * ``method`` → render method override
+    * ``method`` â†’ render method override
 
-      * ``L`` → **LINES** render method (current frame only, for animated images)
-      * ``W`` → **WHOLE** render method (current frame only, for animated images)
-      * *default* → Current effective render method of the image
+      * ``L`` â†’ **LINES** render method (current frame only, for animated images)
+      * ``W`` â†’ **WHOLE** render method (current frame only, for animated images)
+      * *default* â†’ Current effective render method of the image
 
-    * ``z`` → graphics/text stacking order
+    * ``z`` â†’ graphics/text stacking order
 
-      * ``z-index`` → z-index
+      * ``z-index`` â†’ z-index
 
         * An integer in the **signed 32-bit** range (excluding ``-(2**31)``)
-        * ``>= 0`` → the render output will be drawn above text
-        * ``< 0`` → the render output will be drawn below text
-        * ``< -(2**31)/2`` → the render output will be drawn below cells with
+        * ``>= 0`` â†’ the render output will be drawn above text
+        * ``< 0`` â†’ the render output will be drawn below text
+        * ``< -(2**31)/2`` â†’ the render output will be drawn below cells with
           non-default background color
 
-      * *default* → ``z0`` (z-index zero)
+      * *default* â†’ ``z0`` (z-index zero)
       * e.g ``z0``, ``z1``, ``z-1``, ``z2147483647``, ``z-2147483648``
       * overlapping graphics on different z-indexes will be blended
         (by the terminal emulator) if they are semi-transparent
 
-    * ``m`` → graphics/text inter-mix policy
+    * ``m`` â†’ graphics/text inter-mix policy
 
-      * ``mix`` → inter-mix policy
+      * ``mix`` â†’ inter-mix policy
 
-        * ``0`` → text within the region covered by the drawn render output will be
+        * ``0`` â†’ text within the region covered by the drawn render output will be
           erased, though text can be inter-mixed with graphics after drawing
-        * ``1`` → text within the region covered by the drawn render output will NOT
+        * ``1`` â†’ text within the region covered by the drawn render output will NOT
           be erased
 
-      * *default* → ``m0``
+      * *default* â†’ ``m0``
       * e.g ``m0``, ``m1``
 
-    * ``c`` → ZLIB compression level
+    * ``c`` â†’ ZLIB compression level
 
-      * ``compress`` → compression level
+      * ``compress`` â†’ compression level
 
         * An integer in the range ``0`` <= ``compress`` <= ``9``
-        * ``1`` → best speed, ``9`` → best compression, ``0`` → no compression
+        * ``1`` â†’ best speed, ``9`` â†’ best compression, ``0`` â†’ no compression
 
-      * *default* → ``c4``
+      * *default* â†’ ``c4``
       * e.g ``c0``, ``c9``
       * results in a trade-off between render time and data size/draw speed
 
@@ -250,48 +250,7 @@ class KittyImage(GraphicsImage):
         NOTE:
             This method does nothing if the render style is not supported.
         """
-        if not (cls._forced_support or cls.is_supported()):
-            return
-
-        if not isinstance(cursor, bool):
-            raise arg_type_error("cursor", cursor)
-
-        if z_index is not None:
-            if not isinstance(z_index, int):
-                raise arg_type_error("z_index", z_index)
-            if not -(1 << 31) <= z_index < (1 << 31):
-                raise arg_value_error_range("z_index", z_index)
-
-        if not isinstance(now, bool):
-            raise arg_type_error("now", now)
-
-        default_args = __class__.clear.__func__.__kwdefaults__
-        nonlocals = locals()
-        args = {name: nonlocals[name] for name in default_args}
-        given_args = args.items() - (default_args.items() | {("now", True)})
-
-        if len(given_args) > 1:
-            raise arg_value_error_msg(
-                "Only one argument (aside 'now') may be given", len(given_args)
-            )
-        elif given_args:
-            arg, _ = given_args.pop()
-            (write_tty if now else _stdout_write)(
-                (ctlseqs.KITTY_DELETE_CURSOR_b if now else ctlseqs.KITTY_DELETE_CURSOR)
-                if arg == "cursor"
-                else (
-                    (
-                        ctlseqs.KITTY_DELETE_Z_INDEX_b
-                        if now
-                        else ctlseqs.KITTY_DELETE_Z_INDEX
-                    )
-                    % z_index
-                )
-            )
-        elif now:
-            write_tty(ctlseqs.KITTY_DELETE_ALL_b)
-        else:
-            _stdout_write(ctlseqs.KITTY_DELETE_ALL)
+        pass
 
     @classmethod
     def is_supported(cls) -> bool:
@@ -364,17 +323,10 @@ class KittyImage(GraphicsImage):
 
         See :py:meth:`~term_image.image.BaseImage._clear_frame` for description.
         """
-        if cls._KITTY_VERSION and cls._KITTY_VERSION <= (0, 25, 0):
-            cls.clear(z_index=-(1 << 31))
-            return True
-        return False
+        pass
 
     def _display_animated(self, *args, **kwargs) -> None:
-        kwargs["z_index"] = -(1 << 31)
-        if self._KITTY_VERSION > (0, 25, 0):
-            kwargs["blend"] = False
-
-        super()._display_animated(*args, **kwargs)
+        pass
 
     @staticmethod
     def _handle_interrupted_draw():
@@ -389,11 +341,7 @@ class KittyImage(GraphicsImage):
         In this case, output is not consumed but the next graphics command sent
         might not be treated as expected on some terminals e.g Konsole.
         """
-
-        # End last command (does no harm if there wasn't an unterminated command)
-        # and send "last chunk" in case the last transmission was chunked.
-        # Konsole sometimes requires ST to be written twice.
-        print(ctlseqs.ST * 2 + ctlseqs.KITTY_END_CHUNKED, end="", flush=True)
+        pass
 
     def _render_image(
         self,
@@ -415,78 +363,7 @@ class KittyImage(GraphicsImage):
               images when drawn. Otherwise, the behaviour is dependent on the z-index
               and/or the terminal emulator (for images with the same z-index).
         """
-        # NOTE: It's more efficient to write separate strings to the buffer separately
-        # than concatenate and write together.
-
-        # Using `c` and `r` ensures that an image always occupies the correct amount
-        # of columns and lines even if the cell size has changed when it's drawn.
-        # Since we use `c` and `r` control data keys, there's no need upscaling the
-        # image on this end to reduce payload.
-        # Anyways, this also implies that the image(s) have to be resized by the
-        # terminal emulator, thereby leaving various details of resizing in the hands
-        # of the terminal emulator such as the resampling method, etc.
-        # This particularly affects the LINES render method negatively, resulting in
-        # slant/curved edges not lining up across lines (amongst other artifacts
-        # observed on Konsole) supposedly because the terminal emulator resizes each
-        # line separately.
-        # Hence, this optimization is only used for the WHOLE render method.
-
-        render_method = (method or self._render_method).lower()
-        r_width, r_height = self.rendered_size
-        width, height = (
-            self._get_minimal_render_size()
-            if render_method == WHOLE
-            else self._get_render_size()
-        )
-
-        frame_img = img if frame else None
-        img = self._get_render_data(
-            img, alpha, size=(width, height), pixel_data=False, frame=frame  # fmt: skip
-        )[0]
-        format = getattr(f, img.mode)
-        raw_image = img.tobytes()
-
-        # clean up (ImageIterator uses one PIL image throughout)
-        if frame_img is not img:
-            self._close_image(img)
-
-        control_data = ControlData(f=format, s=width, c=r_width, z=z_index)
-        fill = ("" if mix else ERASE_CHARS % r_width) + (CURSOR_FORWARD % r_width)
-        fill_newline = fill + "\n"
-
-        if render_method == LINES:
-            cell_height = height // r_height
-            bytes_per_line = width * cell_height * (format // 8)
-            vars(control_data).update(v=cell_height, r=1)
-
-            with io.StringIO() as buffer, io.BytesIO(raw_image) as raw_image:
-                trans = Transmission(
-                    control_data, raw_image.read(bytes_per_line), compress
-                )
-                blend or buffer.write(KITTY_DELETE_CURSOR)
-                for chunk in trans.get_chunks():
-                    buffer.write(chunk)
-                for _ in range(r_height - 1):
-                    buffer.write(fill_newline)
-                    trans = Transmission(
-                        control_data, raw_image.read(bytes_per_line), compress
-                    )
-                    blend or buffer.write(KITTY_DELETE_CURSOR)
-                    for chunk in trans.get_chunks():
-                        buffer.write(chunk)
-                buffer.write(fill)
-
-                return buffer.getvalue()
-
-        vars(control_data).update(v=height, r=r_height)
-        return "".join(
-            (
-                KITTY_DELETE_CURSOR * (not blend),
-                Transmission(control_data, raw_image, compress).get_chunked(),
-                fill_newline * (r_height - 1),
-                fill,
-            )
-        )
+        pass
 
 
 @dataclass
@@ -515,48 +392,25 @@ class Transmission:
             self.control.o = None
 
     def compress(self):
-        if self.control.t == t.DIRECT and not self._compressed and self.level:
-            self.payload = compress(self.payload, self.level)
-            self.control.o = o.ZLIB
-            self._compressed = True
+        pass
 
     def decompress(self):
-        if self.control.t == t.DIRECT and self._compressed:
-            self.control.o = None
-            self.payload = decompress(self.payload)
-            self._compressed = False
+        pass
 
     def encode(self) -> bytes:
         return standard_b64encode(self.payload)
 
     def get_chunked(self) -> str:
-        return "".join(self.get_chunks())
+        pass
 
     def get_chunks(self, size: int = 4096) -> Generator[str, None, None]:
-        with self.get_payload() as payload:
-            chunk, next_chunk = payload.read(size), payload.read(size)
-            yield (
-                KITTY_TRANSMISSION
-                % (f"{self.get_control_data()},m={bool(next_chunk):d}", chunk)
-            )
-
-            chunk, next_chunk = next_chunk, payload.read(size)
-            while next_chunk:
-                yield KITTY_TRANSMISSION % ("m=1", chunk)
-                chunk, next_chunk = next_chunk, payload.read(size)
-
-            if chunk:  # false if there was never a next chunk
-                yield KITTY_TRANSMISSION % ("m=0", chunk)
+        pass
 
     def get_control_data(self) -> str:
-        return ",".join(
-            f"{key}={value}"
-            for key, value in asdict(self.control).items()
-            if value is not None
-        )
+        pass
 
     def get_payload(self) -> io.StringIO:
-        return io.StringIO(self.encode().decode("ascii"))
+        pass
 
 
 # Values for control data keys with limited set of values

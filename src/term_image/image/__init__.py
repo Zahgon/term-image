@@ -65,7 +65,7 @@ def AutoImage(
 
     Same arguments and raised exceptions as the :py:class:`BaseImage` class constructor.
     """
-    return auto_image_class()(image, width=width, height=height)
+    pass
 
 
 def from_file(
@@ -95,7 +95,7 @@ def from_url(
 
     Same arguments and raised exceptions as :py:meth:`BaseImage.from_url`.
     """
-    return auto_image_class().from_url(url, **kwargs)
+    pass
 
 
 # In order of preference, based on image quality and style performance/functionality

@@ -371,13 +371,7 @@ class RenderIterator:
         NOTE:
             Takes effect from the next [#ri-nf]_ rendered frame.
         """
-        if self._closed:
-            raise FinalizedIteratorError("This iterator has been finalized") from None
-
-        if isinstance(duration, int) and duration <= 0:
-            raise arg_value_error_range("duration", duration)
-
-        self._renderable_data.duration = duration
+        pass
 
     def set_padding(self, padding: Padding) -> None:
         """Sets the :term:`render output` padding.
@@ -391,15 +385,7 @@ class RenderIterator:
         NOTE:
             Takes effect from the next [#ri-nf]_ rendered frame.
         """
-        if self._closed:
-            raise FinalizedIteratorError("This iterator has been finalized") from None
-
-        self._padding = (
-            padding.resolve(get_terminal_size())
-            if isinstance(padding, AlignedPadding) and padding.relative
-            else padding
-        )
-        self._padded_size = padding.get_padded_size(self._renderable_data.size)
+        pass
 
     def set_render_args(self, render_args: RenderArgs) -> None:
         """Sets the render arguments.
@@ -414,16 +400,7 @@ class RenderIterator:
         NOTE:
             Takes effect from the next [#ri-nf]_ rendered frame.
         """
-        if self._closed:
-            raise FinalizedIteratorError("This iterator has been finalized") from None
-
-        render_cls = type(self._renderable)
-        self._render_args = (
-            render_args
-            if render_args.render_cls is render_cls
-            # Validate compatibility (and convert, if compatible)
-            else RenderArgs(render_cls, render_args)
-        )
+        pass
 
     def set_render_size(self, render_size: Size) -> None:
         """Sets the :term:`render size`.
@@ -437,11 +414,7 @@ class RenderIterator:
         NOTE:
             Takes effect from the next [#ri-nf]_ rendered frame.
         """
-        if self._closed:
-            raise FinalizedIteratorError("This iterator has been finalized") from None
-
-        self._renderable_data.size = render_size
-        self._padded_size = self._padding.get_padded_size(render_size)
+        pass
 
     # Extension methods ========================================================
 
@@ -474,34 +447,7 @@ class RenderIterator:
         NOTE:
             *render_data* may be modified by the iterator or the underlying renderable.
         """
-        new = cls.__new__(cls)
-        new._init(renderable, render_args, padding, *args, **kwargs)
-
-        if render_data.render_cls is not type(renderable):
-            raise arg_value_error_msg(
-                "Invalid render data for renderable of type "
-                f"{type(renderable).__name__!r}",
-                render_data,
-            )
-        if render_data.finalized:
-            raise ValueError("The render data has been finalized")
-        if not render_data[Renderable].iteration:
-            raise arg_value_error_msg("Invalid render data for iteration", render_data)
-
-        if not (render_args and render_args.render_cls is type(renderable)):
-            # Validate compatibility (and convert, if compatible)
-            render_args = RenderArgs(type(renderable), render_args)
-
-        new._padding = (
-            padding.resolve(get_terminal_size())
-            if isinstance(padding, AlignedPadding) and padding.relative
-            else padding
-        )
-        new._iterator = new._iterate(render_data, render_args)
-        new._finalize_data = finalize
-        next(new._iterator)
-
-        return new
+        pass
 
     # Private Methods ==========================================================
 
@@ -546,96 +492,7 @@ class RenderIterator:
         render_args: RenderArgs,
     ) -> Generator[Frame, None, None]:
         """Performs the actual render iteration operation."""
-        # Instance init completion
-        self._render_data = render_data
-        self._render_args = render_args
-        renderable_data: RenderableData
-        self._renderable_data = renderable_data = render_data[Renderable]
-        self._padded_size = self._padding.get_padded_size(renderable_data.size)
-
-        # Setup
-        renderable = self._renderable
-        frame_count = renderable.frame_count
-        if frame_count is FrameCount.INDEFINITE:
-            frame_count = 1
-        definite = frame_count > 1
-        loop = self.loop
-        CURRENT = Seek.CURRENT
-        renderable_data.frame_offset = 0
-        cache: list[tuple[Frame | None, Size, int | FrameDuration, RenderArgs]] | None
-        cache = (
-            [(None,) * 4] * frame_count  # type: ignore[list-item]
-            if self._cached
-            else None
-        )
-
-        # Initial dummy frame, yielded but unused by initializers.
-        # Acts as a breakpoint between completion of instance init + iteration setup
-        # and render iteration.
-        yield DUMMY_FRAME
-
-        # Render iteration
-        frame_no = renderable_data.frame_offset * definite
-        while loop:
-            while frame_no < frame_count:
-                if cache:
-                    frame = (cache_entry := cache[frame_no])[0]
-                    frame_details = cache_entry[1:]
-                else:
-                    frame = None
-
-                if not frame or frame_details != (
-                    renderable_data.size,
-                    renderable_data.duration,
-                    self._render_args,
-                ):
-                    # NOTE: Re-render is required even when only `duration` changes
-                    # and the new value is *static* because frame duration may affect
-                    # the render output of some renderables.
-                    try:
-                        frame = renderable._render_(render_data, self._render_args)
-                    except StopIteration as exc:
-                        if definite:
-                            raise StopDefiniteIterationError(
-                                f"{renderable!r} with definite frame count raised "
-                                "`StopIteration` when rendering a frame"
-                            ) from exc
-                        self.loop = 0
-                        return
-
-                    if cache:
-                        cache[frame_no] = (
-                            frame,
-                            renderable_data.size,
-                            renderable_data.duration,
-                            self._render_args,
-                        )
-
-                if self._padded_size != frame.render_size:
-                    frame = Frame(
-                        frame.number,
-                        frame.duration,
-                        self._padded_size,
-                        self._padding.pad(frame.render_output, frame.render_size),
-                    )
-
-                if definite:
-                    renderable_data.frame_offset += 1
-                elif (
-                    renderable_data.frame_offset
-                    or renderable_data.seek_whence != CURRENT
-                ):  # was seeked
-                    renderable_data.update(frame_offset=0, seek_whence=CURRENT)
-
-                yield frame
-
-                if definite:
-                    frame_no = renderable_data.frame_offset
-
-            # INDEFINITE can never reach here
-            frame_no = renderable_data.frame_offset = 0
-            if loop > 0:  # Avoid infinitely large negative numbers
-                self.loop = loop = loop - 1
+        pass
 
 
 # Exceptions ===================================================================

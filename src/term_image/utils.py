@@ -90,11 +90,11 @@ class ClassInstanceMethod(classmethod):  # type: ignore[type-arg]
 
     @no_type_check  # This definition is to be removed soon
     def classmethod(self, function):
-        return type(self)(function, self.f_instance)
+        pass
 
     @no_type_check  # This definition is to be removed soon
     def instancemethod(self, function):
-        return type(self)(self.f_owner, function)
+        pass
 
 
 class ClassPropertyBase(property):
@@ -139,21 +139,7 @@ def no_redecorate(decor: Callable[P, T]) -> Callable[P, T]:
 
     Also used to mark decorators for auto documentation.
     """
-    if hasattr(decor, "_no_redecorate_wrapped_"):
-        return decor
-
-    @wraps(decor)
-    def no_redecorate_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        obj: Any = args[0]
-        if not hasattr(obj, f"_{decor.__name__}_wrapped_"):
-            obj = decor(*args, **kwargs)
-            setattr(obj, f"_{decor.__name__}_wrapped_", ...)
-
-        return obj  # type: ignore[no-any-return]
-
-    setattr(no_redecorate_wrapper, "_no_redecorate_wrapped_", ...)
-
-    return no_redecorate_wrapper
+    pass
 
 
 @no_redecorate
@@ -173,25 +159,7 @@ def cached(func: Callable[P, T]) -> Callable[P, T]:
 
         Only works when function arguments, if any, are hashable.
     """
-
-    @wraps(func)
-    def cached_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        arguments = (args, tuple(kwargs.items()))
-        with lock:
-            try:
-                return cache[arguments]
-            except KeyError:
-                return cache.setdefault(arguments, func(*args, **kwargs))
-
-    def invalidate() -> None:
-        with lock:
-            cache.clear()
-
-    cache: dict[tuple[Any, tuple[tuple[str, Any], ...]], T] = {}
-    lock = RLock()
-    setattr(cached_wrapper, "_invalidate_cache", invalidate)
-
-    return cached_wrapper
+    pass
 
 
 @no_redecorate
@@ -219,34 +187,7 @@ def lock_tty(func: Callable[P, T]) -> Callable[P, T]:
         in which that occurs will be out of sync until that call returns.
         Hence, avoid starting a subprocess within a decorated function.
     """
-
-    @wraps(func)
-    def lock_tty_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        # If a thread reaches this point while the lock is being changed
-        # (the old lock has been acquired but hasn't been changed), after the lock has
-        # been changed and the former lock is released, the waiting thread will acquire
-        # the old lock making it to be out of sync.
-        # Hence the second expression, which allows such a thread to acquire the new
-        # lock and be in sync.
-        # NB: Multiple expressions are processed as multiple nested with statements.
-        with _tty_lock, _tty_lock:
-            # logging.debug(f"{func.__name__} acquired TTY lock", stacklevel=3)
-            return func(*args, **kwargs)
-
-    if func.__module__.startswith("term_image") and func.__doc__ is not None:
-        sync_doc = """
-
-        IMPORTANT:
-            Synchronized with :py:func:`~term_image.utils.lock_tty`.
-        """
-
-        last_line = func.__doc__.rpartition("\n")[2]
-        indent = " " * (len(last_line) - len(last_line.lstrip()))
-        lock_tty_wrapper.__doc__ = func.__doc__.rstrip() + "\n".join(
-            line.replace(" " * 8, indent, 1) for line in sync_doc.splitlines()
-        )
-
-    return lock_tty_wrapper
+    pass
 
 
 @no_redecorate
@@ -268,29 +209,7 @@ def terminal_size_cached(func: Callable[P, T]) -> Callable[P, T]:
         It's thread-safe, i.e there is no race condition between calls to the same
         decorated callable across threads of the same process.
     """
-    cache: tuple[T, os.terminal_size] | None = None
-    lock = RLock()
-
-    @wraps(func)
-    def terminal_size_cached_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        nonlocal cache
-
-        with lock:
-            ts = get_terminal_size()
-            if not cache or ts != cache[1]:
-                cache = (func(*args, **kwargs), ts)
-
-        return cache[0]
-
-    def invalidate() -> None:
-        nonlocal cache
-
-        with lock:
-            cache = None
-
-    setattr(terminal_size_cached_wrapper, "_invalidate_terminal_size_cache", invalidate)
-
-    return terminal_size_cached_wrapper
+    pass
 
 
 @no_redecorate
@@ -301,21 +220,7 @@ def unix_tty_only(func: Callable[P, T]) -> Callable[P, T | None]:
     Args:
         func: The function to be wrapped.
     """
-
-    @wraps(func)
-    def unix_only_wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
-        return None if _tty_fd == -1 else func(*args, **kwargs)
-
-    if unix_only_wrapper.__doc__ is None:
-        unix_only_wrapper.__doc__ = ""
-
-    unix_only_wrapper.__doc__ += """
-    NOTE:
-        Currently works on UNIX only, returns ``None`` on any other platform or when
-        there is no :term:`active terminal`.
-    """
-
-    return unix_only_wrapper
+    pass
 
 
 # Non-decorators
@@ -330,11 +235,7 @@ def arg_type_error(arg: str, value: Any, got_extra: str = "") -> TypeError:
 
 
 def arg_type_error_msg(msg: str, value: Any, got_extra: str = "") -> TypeError:
-    return TypeError(
-        f"{msg} (got: {type(value).__qualname__}; {got_extra})"
-        if got_extra
-        else f"{msg} (got: {type(value).__qualname__})"
-    )
+    pass
 
 
 def arg_value_error(arg: str, value: Any, got_extra: str = "") -> ValueError:
@@ -363,11 +264,7 @@ def arg_value_error_range(arg: str, value: Any, got_extra: str = "") -> ValueErr
 
 def clear_queue(queue: Queue[Any] | mp_Queue[Any]) -> None:
     """Purges the given queue"""
-    while True:
-        try:
-            queue.get(timeout=0.005)
-        except Empty:
-            break
+    pass
 
 
 def color(
@@ -391,13 +288,7 @@ def color(
 
     The color code is omitted for any of *fg* or *bg* that is empty.
     """
-    return (
-        ctlseqs.SGR_FG_DIRECT * bool(fg) + ctlseqs.SGR_BG_DIRECT * bool(bg) + "%s"
-    ) % (
-        *(fg or ()),
-        *(bg or ()),
-        text,
-    ) + ctlseqs.SGR_DEFAULT * end
+    pass
 
 
 @unix_tty_only
@@ -501,30 +392,7 @@ def get_fg_bg_colors(
         * an RGB hex string if *hex* is ``True``
         * ``None`` if undetermined
     """
-    # The terminal's response to the queries is not read all at once
-    with _tty_lock, _tty_lock:  # See the comment in `lock_tty_wrapper()`
-        response = query_terminal(
-            # Not all terminals (e.g VTE-based) support multiple queries in one escape
-            # sequence, hence the separate sequences for FG and BG
-            ctlseqs.TEXT_FG_QUERY_b + ctlseqs.TEXT_BG_QUERY_b + ctlseqs.DA1_b,
-            # The response might contain a "c"; can't stop reading at "c"
-            lambda s: not s.endswith(ctlseqs.CSI_b),
-        )
-        if _queries_enabled:
-            read_tty()  # The rest of the response to DA1
-
-    fg = bg = None
-    if response:
-        for c, spec in ctlseqs.RGB_SPEC_re.findall(response.decode()):
-            if c == "10":
-                fg = ctlseqs.x_parse_color(spec)
-            elif c == "11":
-                bg = ctlseqs.x_parse_color(spec)
-
-    return (
-        fg and (HEX_RGB_FMT % fg if hex else fg),
-        bg and (HEX_RGB_FMT % bg if hex else bg),
-    )
+    pass
 
 
 @cached
@@ -728,7 +596,7 @@ def read_tty_all() -> bytes | None:
     IMPORTANT:
         Synchronized with :py:func:`~term_image.utils.lock_tty`.
     """
-    return read_tty()
+    pass
 
 
 @unix_tty_only
@@ -748,60 +616,12 @@ def write_tty(data: bytes) -> None:
 
 @no_type_check
 def _process_start_wrapper(self, *args, **kwargs):
-    global _tty_lock, _cell_size_cache, _cell_size_lock
-
-    # Ensure a lock is not acquired by another process/thread before changing it.
-    # The only case in which this is useless is when the owner thread is the
-    # one starting a process. In such a situation, the owner thread will be partially
-    # (may acquire the new lock in a nested call while still holding the old lock)
-    # out of sync until it has fully released the old lock.
-
-    with _tty_lock:
-        if isinstance(_tty_lock, _rlock_type):
-            try:
-                self._tty_lock = _tty_lock = mp_RLock()
-            except ImportError:
-                self._tty_lock = None
-                warnings.warn(
-                    "Multi-process synchronization is not supported on this platform!\n"
-                    "Hence, if any subprocess will be writing/reading to/from the "
-                    "active terminal, it may be unsafe to use any features requiring"
-                    "terminal queries.\n"
-                    "See https://term-image.readthedocs.io/en/stable/guide/concepts"
-                    ".html#terminal-queries\n"
-                    "If any related issues occur, it's advisable to disable queries "
-                    "using `term_image.disable_queries()`.\n"
-                    "Simply set an 'ignore' filter for this warning (before starting "
-                    "any subprocess) if not using any of the affected features.",
-                    TermImageUserWarning,
-                )
-        else:
-            self._tty_lock = _tty_lock
-
-    with _cell_size_lock:
-        if isinstance(_cell_size_lock, _rlock_type):
-            try:
-                self._cell_size_cache = _cell_size_cache = Array("i", _cell_size_cache)
-                _cell_size_lock = _cell_size_cache.get_lock()
-            except ImportError:
-                self._cell_size_cache = None
-        else:
-            self._cell_size_cache = _cell_size_cache
-
-    return _process_start_wrapper.__wrapped__(self, *args, **kwargs)
+    pass
 
 
 @no_type_check
 def _process_run_wrapper(self, *args, **kwargs):
-    global _tty_lock, _cell_size_cache, _cell_size_lock
-
-    if self._tty_lock:
-        _tty_lock = self._tty_lock
-    if self._cell_size_cache:
-        _cell_size_cache = self._cell_size_cache
-        _cell_size_lock = _cell_size_cache.get_lock()
-
-    return _process_run_wrapper.__wrapped__(self, *args, **kwargs)
+    pass
 
 
 # Private internal variables
